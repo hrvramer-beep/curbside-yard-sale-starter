@@ -1,0 +1,58 @@
+---
+import { Image } from "astro:assets";
+import type { ItemEntry } from "../lib/catalog";
+
+interface Props {
+  item: ItemEntry;
+}
+
+const { item } = Astro.props;
+const photos = item.data.photos;
+const group = `gallery-${item.id}`;
+---
+
+<div class="gallery">
+  <div class="gallery-stage">
+    {
+      photos.map((photo, index) => (
+        <figure class="shot">
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            layout="constrained"
+            width={1200}
+            height={900}
+            sizes="(min-width: 900px) 640px, 100vw"
+            loading={index === 0 ? "eager" : "lazy"}
+            fetchpriority={index === 0 ? "high" : "auto"}
+          />
+        </figure>
+      ))
+    }
+  </div>
+  {
+    photos.length > 1 && (
+      <ul class="thumbs">
+        {photos.map((photo, index) => (
+          <li>
+            <label class="thumb">
+              <input type="radio" name={group} checked={index === 0} />
+              <Image
+                src={photo.src}
+                alt=""
+                layout="constrained"
+                width={320}
+                height={240}
+                sizes="88px"
+                loading="lazy"
+              />
+              <span class="sr-only">
+                Photo {index + 1} of {photos.length}: {photo.alt}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</div>

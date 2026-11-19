@@ -1,0 +1,46 @@
+---
+import { CONTACT_FORM } from "../../site.config.mjs";
+
+interface Props {
+  itemSlug: string;
+  heading: string;
+  intro: string;
+  idPrefix: string;
+}
+
+const { itemSlug, heading, intro, idPrefix } = Astro.props;
+const headingId = `${idPrefix}-heading`;
+const botFieldId = `${idPrefix}-bot-field`;
+const nameId = `${idPrefix}-name`;
+const emailId = `${idPrefix}-email`;
+const offerId = `${idPrefix}-offer`;
+const messageId = `${idPrefix}-message`;
+---
+
+<section class="form-card" aria-labelledby={headingId}>
+  <h2 id={headingId}>{heading}</h2>
+  <p class="fine">{intro}</p>
+  <form
+    name={CONTACT_FORM.formName}
+    method="POST"
+    action="/thanks"
+    data-netlify="true"
+    data-netlify-honeypot="bot-field"
+  >
+    <input type="hidden" name="form-name" value={CONTACT_FORM.formName} />
+    <input type="hidden" name="item" value={itemSlug} />
+    <p hidden>
+      <label for={botFieldId}>{CONTACT_FORM.botLabel}</label>
+      <input id={botFieldId} name="bot-field" tabindex="-1" autocomplete="off" />
+    </p>
+    <label for={nameId}>{CONTACT_FORM.nameLabel}</label>
+    <input id={nameId} name="name" type="text" autocomplete="name" required />
+    <label for={emailId}>{CONTACT_FORM.emailLabel}</label>
+    <input id={emailId} name="email" type="email" autocomplete="email" required />
+    <label for={offerId}>{CONTACT_FORM.offerLabel}</label>
+    <input id={offerId} name="offer" type="number" inputmode="decimal" min="0" step="0.01" />
+    <label for={messageId}>{CONTACT_FORM.messageLabel}</label>
+    <textarea id={messageId} name="message" required></textarea>
+    <button type="submit">{CONTACT_FORM.submitLabel}</button>
+  </form>
+</section>

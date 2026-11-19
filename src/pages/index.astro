@@ -1,0 +1,88 @@
+---
+import Base from "../layouts/Base.astro";
+import ItemCard from "../components/ItemCard.astro";
+import { PICKUP_AREA, SITE_NAME, SITE_TAGLINE } from "../../site.config.mjs";
+import { absolutePhotoUrls, groupItems, loadVisibleItems, metaDescription } from "../lib/catalog";
+import { websiteJsonLd } from "../lib/jsonld";
+
+const site = Astro.site;
+if (!site) throw new Error("SITE_URL is missing.");
+const items = await loadVisibleItems();
+const groups = groupItems(items);
+const description = metaDescription(
+  `${SITE_TAGLINE} See what is available and what has sold. Shipping is listed on each item. Local pickup is in ${PICKUP_AREA}.`,
+  SITE_TAGLINE,
+);
+const lead = items.find((item) => item.data.status === "available") ?? items[0];
+const leadPhoto = lead ? (await absolutePhotoUrls(lead, site))[0] : undefined;
+let eagerAssigned = false;
+---
+
+<Base
+  title={`${SITE_NAME} — online yard sale`}
+  description={description}
+  path="/"
+  image={leadPhoto?.src}
+  imageAlt={leadPhoto?.alt}
+  jsonLd={websiteJsonLd(site)}
+>
+  <header class="hero">
+    <h1>{SITE_NAME}</h1>
+    <p class="lede">
+      {SITE_TAGLINE} Each listing is a personal unwanted item, with a price, a shipping cost, and the option to ask about pickup in {PICKUP_AREA}.
+    </p>
+  </header>
+
+  {
+    items.length === 0 && (
+      <p class="empty">Nothing is listed right now. Sold pages stay up once something leaves, and new listings show here when they are published.</p>
+    )
+  }
+
+  {
+    groups.available.length > 0 && (
+      <section class="section" aria-labelledby="available-heading">
+        <h2 id="available-heading">Available</h2>
+        <div class="grid">
+          {groups.available.map((item) => {
+            const eager = !eagerAssigned;
+            eagerAssigned = true;
+            return <ItemCard item={item} eager={eager} />;
+          })}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    groups.pending.length > 0 && (
+      <section class="section" aria-labelledby="pending-heading">
+        <h2 id="pending-heading">Pending</h2>
+        <p class="note">These are on hold and are not for sale right now.</p>
+        <div class="grid">
+          {groups.pending.map((item) => {
+            const eager = !eagerAssigned;
+            eagerAssigned = true;
+            return <ItemCard item={item} eager={eager} />;
+          })}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    groups.sold.length > 0 && (
+      <section class="section" aria-labelledby="sold-heading">
+        <h2 id="sold-heading">Recently sold</h2>
+        <p class="note">Sold listings stay up so old links still open. They are out of stock.</p>
+        <div class="grid">
+          {groups.sold.map((item) => {
+            const eager = !eagerAssigned;
+            eagerAssigned = true;
+            return <ItemCard item={item} eager={eager} />;
+          })}
+        </div>
+      </section>
+    )
+  }
+</Base>

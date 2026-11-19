@@ -1,0 +1,13 @@
+---
+import Base from "../layouts/Base.astro";
+
+const description = "Your message was submitted.";
+---
+
+<Base title="Thanks" description={description} path="/thanks" noindex={true}>
+  <header class="page-head">
+    <h1>Thanks, your message was submitted.</h1>
+    <p>If a reply is needed, it will come to the email address you entered.</p>
+    <p><a href="/">Back to the listings</a></p>
+  </header>
+</Base>

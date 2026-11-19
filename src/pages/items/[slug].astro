@@ -1,0 +1,156 @@
+---
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Gallery from "../../components/Gallery.astro";
+import OfferForm from "../../components/OfferForm.astro";
+import { CONTACT_FORM, PICKUP_AREA, POLICIES, pickupAvailableNote } from "../../../site.config.mjs";
+import {
+  absolutePhotoUrls,
+  addMoney,
+  conditionLabel,
+  entryText,
+  flatShipping,
+  itemPath,
+  loadVisibleItems,
+  metaDescription,
+  statusLabel,
+  usd,
+  type ItemEntry,
+} from "../../lib/catalog";
+import { productJsonLd, shippedPrice } from "../../lib/jsonld";
+
+export async function getStaticPaths() {
+  const items = await loadVisibleItems();
+  return items.map((item) => ({
+    params: { slug: item.id },
+    props: { item },
+  }));
+}
+
+interface Props {
+  item: ItemEntry;
+}
+
+const { item } = Astro.props;
+const site = Astro.site;
+if (!site) throw new Error("SITE_URL is missing.");
+const { Content } = await render(item);
+const photos = await absolutePhotoUrls(item, site);
+const shipping = flatShipping(item);
+const shipped = shippedPrice(item);
+const available = item.data.status === "available";
+const pairLink = item.data.pairPaymentLink ?? "";
+const showOne = available && item.data.paymentLink.length > 0;
+const showPair = available && pairLink.length > 0;
+const oneLabel =
+  typeof item.data.shippedPrice === "number" ? `Buy one, shipped: ${usd(item.data.shippedPrice)}` : "Buy";
+const pairLabel =
+  typeof item.data.pairShippedPrice === "number"
+    ? `Buy both, shipped: ${usd(item.data.pairShippedPrice)}`
+    : "Buy both";
+const stockBits: string[] = [];
+if (available && typeof item.data.quantity === "number") stockBits.push(`${item.data.quantity} available`);
+if (available && typeof item.data.pairPrice === "number") stockBits.push(`${usd(item.data.pairPrice)} for both`);
+const stockLine = stockBits.join(", ");
+const pickupArea = item.data.pickupArea || PICKUP_AREA;
+const computedShipped = addMoney(item.data.price, shipping);
+const shippingNote =
+  shipping === 0
+    ? "Shipping is free inside the US. The shipped price is the item price."
+    : shipped === computedShipped
+      ? `Shipping in the US is ${usd(shipping)}. The shipped price is the item plus that shipping.`
+      : `Shipping in the US is ${usd(shipping)}. The shipped price is ${usd(shipped)}.`;
+const description = metaDescription(entryText(item), `${item.data.title}, ${usd(item.data.price)} plus shipping.`);
+const jsonLd = await productJsonLd(item, site);
+---
+
+<Base
+  title={item.data.title}
+  description={description}
+  path={itemPath(item.id)}
+  image={photos[0]?.src}
+  imageAlt={photos[0]?.alt}
+  jsonLd={jsonLd}
+>
+  <article>
+    <div class="item-layout">
+    <Gallery item={item} />
+    <div class="item-summary">
+      <p class:list={["pill", `pill-${item.data.status}`]}>{statusLabel(item.data.status)}</p>
+      <div class="item-copy">
+        <h1>{item.data.title}</h1>
+      </div>
+      <div class="price-block">
+        <div>
+          <span class="label">Price</span>
+          <strong>{usd(item.data.price)}</strong>
+        </div>
+        <div>
+          <span class="label">Shipped</span>
+          <strong>{usd(shipped)}</strong>
+        </div>
+      </div>
+      <p class="fine">{shippingNote}</p>
+      <ul class="facts">
+        <li><span>Condition</span> <strong>{conditionLabel[item.data.condition]}</strong></li>
+        {item.data.conditionNote && (
+          <li>
+            <span>Condition note</span> <strong>{item.data.conditionNote}</strong>
+          </li>
+        )}
+        <li><span>Category</span> <strong>{item.data.category}</strong></li>
+        <li><span>Brand</span> <strong>{item.data.brand}</strong></li>
+        {item.data.mpn && <li><span>MPN</span> <strong>{item.data.mpn}</strong></li>}
+        {item.data.gtin && <li><span>GTIN</span> <strong>{item.data.gtin}</strong></li>}
+        {item.data.weight && <li><span>Weight</span> <strong>{item.data.weight} lb</strong></li>}
+      </ul>
+      <p class="note-box">
+        {
+          item.data.localPickup ? pickupAvailableNote(pickupArea) : POLICIES.shipsOnly
+        }
+      </p>
+      {
+        item.data.status === "sold" && (
+          <p class="status-sold">
+            <strong>Sold.</strong> This page stays up so the link still works. It is out of stock and cannot be bought.
+          </p>
+        )
+      }
+      {
+        item.data.status === "pending" && (
+          <p>
+            <strong>Pending.</strong> This item is on hold and is not available to buy right now.
+          </p>
+        )
+      }
+      {stockLine && <p class="fine">{stockLine}</p>}
+      {
+        showOne || showPair ? (
+          <div class="buy-actions">
+            {showOne && <a class="buy" href={item.data.paymentLink}>{oneLabel}</a>}
+            {showPair && <a class="buy" href={pairLink}>{pairLabel}</a>}
+          </div>
+        ) : available ? (
+          <p class="fine">This item does not have a payment link yet, so it cannot be bought online.</p>
+        ) : null
+      }
+    </div>
+    </div>
+    <div class="stack">
+    <div class="prose">
+      <h2>Description</h2>
+      <Content />
+    </div>
+    {
+      item.data.status === "available" && (
+        <OfferForm
+          idPrefix={`offer-${item.id}`}
+          itemSlug={item.id}
+          heading={CONTACT_FORM.itemHeading}
+          intro={CONTACT_FORM.itemIntro}
+        />
+      )
+    }
+    </div>
+  </article>
+</Base>

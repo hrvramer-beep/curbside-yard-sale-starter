@@ -1,0 +1,92 @@
+---
+import "../styles/global.css";
+import { LOGO_SRC, PICKUP_AREA, SITE_NAME } from "../../site.config.mjs";
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  imageAlt?: string;
+  noindex?: boolean;
+  jsonLd?: unknown | unknown[];
+}
+
+const { title, description, path, image, imageAlt, noindex = false, jsonLd } = Astro.props;
+const site = Astro.site;
+if (!site) throw new Error("Set site in astro.config from SITE_URL before building.");
+const canonical = new URL(path, site).href;
+const blocks = jsonLd === undefined ? [] : Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+const json = blocks.map((block) => JSON.stringify(block).replace(/</g, "\\u003c"));
+const pageTitle = path === "/" ? title : `${title} · ${SITE_NAME}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#23483c" />
+    <meta name="robots" content={noindex ? "noindex, follow" : "index, follow"} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content={path.startsWith("/items/") ? "product" : "website"} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {image && <meta property="og:image" content={image} />}
+    {image && <meta property="og:image:alt" content={imageAlt ?? title} />}
+    {image && <meta property="og:image:width" content="1200" />}
+    {image && <meta property="og:image:height" content="900" />}
+    <meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    {image && <meta name="twitter:image" content={image} />}
+    {image && <meta name="twitter:image:alt" content={imageAlt ?? title} />}
+    {json.map((block) => <script type="application/ld+json" set:html={block} />)}
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">
+          {
+            LOGO_SRC ? (
+              <span class="mark">
+                <img src={LOGO_SRC} alt="" width="32" height="32" />
+              </span>
+            ) : (
+              <span class="mark" aria-hidden="true">
+                C
+              </span>
+            )
+          }
+          <span>{SITE_NAME}</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="/" aria-current={path === "/" ? "page" : undefined}>Listings</a>
+          <a href="/about" aria-current={path === "/about" ? "page" : undefined}>About</a>
+          <a href="/contact" aria-current={path === "/contact" ? "page" : undefined}>Contact</a>
+        </nav>
+      </div>
+    </header>
+    <main id="content" class="wrap" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>{SITE_NAME} · personal yard sale · {PICKUP_AREA}</p>
+        <nav aria-label="Footer">
+          <a href="/about">Policies</a>
+          ·
+          <a href="/contact">Contact</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

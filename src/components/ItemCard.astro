@@ -1,0 +1,44 @@
+---
+import { Image } from "astro:assets";
+import {
+  conditionLabel,
+  itemPath,
+  statusLabel,
+  usd,
+  type ItemEntry,
+} from "../lib/catalog";
+import { shippedPrice } from "../lib/jsonld";
+
+interface Props {
+  item: ItemEntry;
+  eager?: boolean;
+}
+
+const { item, eager = false } = Astro.props;
+const photo = item.data.photos[0];
+const shipped = shippedPrice(item);
+---
+
+<a class:list={["card", item.data.status === "sold" && "is-sold"]} href={itemPath(item.id)}>
+  <div class="media">
+    <Image
+      src={photo.src}
+      alt={photo.alt}
+      layout="constrained"
+      width={800}
+      height={600}
+      sizes="(min-width: 700px) 50vw, 100vw"
+      loading={eager ? "eager" : "lazy"}
+      fetchpriority={eager ? "high" : "auto"}
+    />
+  </div>
+  <div class="body">
+    <span class:list={["pill", `pill-${item.data.status}`]}>{statusLabel(item.data.status)}</span>
+    <h3>{item.data.title}</h3>
+    <p class="price-row">
+      <span>{usd(item.data.price)}</span>
+      <span>{usd(shipped)} shipped</span>
+    </p>
+    <p class="meta">{conditionLabel[item.data.condition]} · {item.data.category}</p>
+  </div>
+</a>

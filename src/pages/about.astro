@@ -1,0 +1,31 @@
+---
+import Base from "../layouts/Base.astro";
+import { POLICIES, SITE_NAME } from "../../site.config.mjs";
+
+const description = POLICIES.aboutDescription;
+---
+
+<Base title="Shipping, pickup, and policies" description={description} path="/about">
+  <header class="page-head">
+    <h1>About {SITE_NAME}</h1>
+    <p>{POLICIES.aboutIntro}</p>
+  </header>
+  <div class="stack">
+    <section class="policy" aria-labelledby="shipping">
+      <h2 id="shipping">Shipping</h2>
+      {POLICIES.shipping.map((paragraph) => <p>{paragraph}</p>)}
+    </section>
+    <section class="policy" aria-labelledby="pickup">
+      <h2 id="pickup">Local pickup</h2>
+      {POLICIES.pickup.map((paragraph) => <p>{paragraph}</p>)}
+    </section>
+    <section class="policy" aria-labelledby="returns">
+      <h2 id="returns">Returns</h2>
+      {POLICIES.returns.map((paragraph) => <p>{paragraph}</p>)}
+    </section>
+    <section class="policy" aria-labelledby="payment">
+      <h2 id="payment">Payment</h2>
+      {POLICIES.payment.map((paragraph) => <p>{paragraph}</p>)}
+    </section>
+  </div>
+</Base>

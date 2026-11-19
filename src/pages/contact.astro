@@ -1,0 +1,22 @@
+---
+import Base from "../layouts/Base.astro";
+import OfferForm from "../components/OfferForm.astro";
+import { CONTACT_FORM, SITE_NAME } from "../../site.config.mjs";
+
+const description = `Message the ${SITE_NAME} seller through the form on this page.`;
+---
+
+<Base title="Contact" description={description} path="/contact">
+  <header class="page-head">
+    <h1>Contact</h1>
+    <p>{CONTACT_FORM.contactPageIntro}</p>
+  </header>
+  <div class="stack">
+    <OfferForm
+      idPrefix="contact"
+      itemSlug="general"
+      heading={CONTACT_FORM.contactHeading}
+      intro={CONTACT_FORM.contactIntro}
+    />
+  </div>
+</Base>
